@@ -10,11 +10,11 @@ Find any smart contract, and build your project faster: https://www.cookbook.dev
 Twitter: https://twitter.com/cookbook_dev
 Discord: https://discord.gg/WzsfPcfHrk
 
-Find this contract on Cookbook: https://www.cookbook.dev/contracts/Uniswap-V3?utm=code
+Find this contract on Cookbook: https://www.cookbook.dev/contracts/Uniswap-V4?utm=code
 */
 
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity >=0.5.0;
+pragma solidity ^0.8.20;
 
 /// @title Minimal ERC20 interface for Uniswap
 /// @notice Contains a subset of the full ERC20 interface that is used in Uniswap V3
@@ -47,11 +47,7 @@ interface IERC20Minimal {
     /// @param recipient The recipient of the transfer
     /// @param amount The amount of the transfer
     /// @return Returns true for a successful transfer, false for unsuccessful
-    function transferFrom(
-        address sender,
-        address recipient,
-        uint256 amount
-    ) external returns (bool);
+    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
 
     /// @notice Event emitted when tokens are transferred from one address to another, either via `#transfer` or `#transferFrom`.
     /// @param from The account from which the tokens were sent, i.e. the balance decreased

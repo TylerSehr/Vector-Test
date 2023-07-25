@@ -10,15 +10,17 @@ Find any smart contract, and build your project faster: https://www.cookbook.dev
 Twitter: https://twitter.com/cookbook_dev
 Discord: https://discord.gg/WzsfPcfHrk
 
-Find this contract on Cookbook: https://www.cookbook.dev/contracts/Uniswap-V3?utm=code
+Find this contract on Cookbook: https://www.cookbook.dev/contracts/Uniswap-V4?utm=code
 */
 
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity =0.7.6;
+pragma solidity ^0.8.20;
 
 /// @title Prevents delegatecall to a contract
 /// @notice Base contract that provides a modifier for preventing delegatecall to methods in a child contract
 abstract contract NoDelegateCall {
+    error DelegateCallNotAllowed();
+
     /// @dev The original address of this contract
     address private immutable original;
 
@@ -31,7 +33,7 @@ abstract contract NoDelegateCall {
     /// @dev Private method is used instead of inlining into modifier because modifiers are copied into each method,
     ///     and the use of immutable means the address bytes are copied in every place the modifier is used.
     function checkNotDelegateCall() private view {
-        require(address(this) == original);
+        if (address(this) != original) revert DelegateCallNotAllowed();
     }
 
     /// @notice Prevents delegatecall into the modified method

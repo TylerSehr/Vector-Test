@@ -10,29 +10,29 @@ Find any smart contract, and build your project faster: https://www.cookbook.dev
 Twitter: https://twitter.com/cookbook_dev
 Discord: https://discord.gg/WzsfPcfHrk
 
-Find this contract on Cookbook: https://www.cookbook.dev/contracts/Uniswap-V3?utm=code
+Find this contract on Cookbook: https://www.cookbook.dev/contracts/Uniswap-V4?utm=code
 */
 
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity =0.7.6;
+pragma solidity ^0.8.20;
 
-import './Tick.sol';
+import {Pool} from "./Pool.sol";
 
 contract TickOverflowSafetyEchidnaTest {
-    using Tick for mapping(int24 => Tick.Info);
+    using Pool for Pool.State;
 
     int24 private constant MIN_TICK = -16;
     int24 private constant MAX_TICK = 16;
-    uint128 private constant MAX_LIQUIDITY = type(uint128).max / 32;
 
-    mapping(int24 => Tick.Info) private ticks;
+    Pool.State private pool;
     int24 private tick = 0;
+
+    // half the cap of fee growth has happened, this can overflow
+    uint256 feeGrowthGlobal0X128 = type(uint256).max / 2;
+    uint256 feeGrowthGlobal1X128 = type(uint256).max / 2;
 
     // used to track how much total liquidity has been added. should never be negative
     int256 totalLiquidity = 0;
-    // half the cap of fee growth has happened, this can overflow
-    uint256 private feeGrowthGlobal0X128 = type(uint256).max / 2;
-    uint256 private feeGrowthGlobal1X128 = type(uint256).max / 2;
     // how much total growth has happened, this cannot overflow
     uint256 private totalGrowth0 = 0;
     uint256 private totalGrowth1 = 0;
@@ -49,53 +49,29 @@ contract TickOverflowSafetyEchidnaTest {
         totalGrowth1 += amount;
     }
 
-    function setPosition(
-        int24 tickLower,
-        int24 tickUpper,
-        int128 liquidityDelta
-    ) external {
+    function setPosition(int24 tickLower, int24 tickUpper, int128 liquidityDelta) external {
         require(tickLower > MIN_TICK);
         require(tickUpper < MAX_TICK);
         require(tickLower < tickUpper);
-        bool flippedLower =
-            ticks.update(
-                tickLower,
-                tick,
-                liquidityDelta,
-                feeGrowthGlobal0X128,
-                feeGrowthGlobal1X128,
-                0,
-                0,
-                uint32(block.timestamp),
-                false,
-                MAX_LIQUIDITY
-            );
-        bool flippedUpper =
-            ticks.update(
-                tickUpper,
-                tick,
-                liquidityDelta,
-                feeGrowthGlobal0X128,
-                feeGrowthGlobal1X128,
-                0,
-                0,
-                uint32(block.timestamp),
-                true,
-                MAX_LIQUIDITY
-            );
+        (bool flippedLower,) = pool.updateTick(tickLower, liquidityDelta, false);
+        (bool flippedUpper,) = pool.updateTick(tickUpper, liquidityDelta, true);
 
         if (flippedLower) {
             if (liquidityDelta < 0) {
-                assert(ticks[tickLower].liquidityGross == 0);
-                ticks.clear(tickLower);
-            } else assert(ticks[tickLower].liquidityGross > 0);
+                assert(pool.ticks[tickLower].liquidityGross == 0);
+                pool.clearTick(tickLower);
+            } else {
+                assert(pool.ticks[tickLower].liquidityGross > 0);
+            }
         }
 
         if (flippedUpper) {
             if (liquidityDelta < 0) {
-                assert(ticks[tickUpper].liquidityGross == 0);
-                ticks.clear(tickUpper);
-            } else assert(ticks[tickUpper].liquidityGross > 0);
+                assert(pool.ticks[tickUpper].liquidityGross == 0);
+                pool.clearTick(tickUpper);
+            } else {
+                assert(pool.ticks[tickUpper].liquidityGross > 0);
+            }
         }
 
         totalLiquidity += liquidityDelta;
@@ -113,12 +89,14 @@ contract TickOverflowSafetyEchidnaTest {
         require(target < MAX_TICK);
         while (tick != target) {
             if (tick < target) {
-                if (ticks[tick + 1].liquidityGross > 0)
-                    ticks.cross(tick + 1, feeGrowthGlobal0X128, feeGrowthGlobal1X128, 0, 0, uint32(block.timestamp));
+                if (pool.ticks[tick + 1].liquidityGross > 0) {
+                    pool.crossTick(tick + 1, feeGrowthGlobal0X128, feeGrowthGlobal1X128);
+                }
                 tick++;
             } else {
-                if (ticks[tick].liquidityGross > 0)
-                    ticks.cross(tick, feeGrowthGlobal0X128, feeGrowthGlobal1X128, 0, 0, uint32(block.timestamp));
+                if (pool.ticks[tick].liquidityGross > 0) {
+                    pool.crossTick(tick, feeGrowthGlobal0X128, feeGrowthGlobal1X128);
+                }
                 tick--;
             }
         }

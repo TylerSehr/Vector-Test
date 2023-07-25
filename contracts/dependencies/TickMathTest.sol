@@ -10,13 +10,13 @@ Find any smart contract, and build your project faster: https://www.cookbook.dev
 Twitter: https://twitter.com/cookbook_dev
 Discord: https://discord.gg/WzsfPcfHrk
 
-Find this contract on Cookbook: https://www.cookbook.dev/contracts/Uniswap-V3?utm=code
+Find this contract on Cookbook: https://www.cookbook.dev/contracts/Uniswap-V4?utm=code
 */
 
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity =0.7.6;
+pragma solidity ^0.8.20;
 
-import './TickMath.sol';
+import {TickMath} from "./TickMath.sol";
 
 contract TickMathTest {
     function getSqrtRatioAtTick(int24 tick) external pure returns (uint160) {
@@ -45,5 +45,13 @@ contract TickMathTest {
 
     function MAX_SQRT_RATIO() external pure returns (uint160) {
         return TickMath.MAX_SQRT_RATIO;
+    }
+
+    function MIN_TICK() external pure returns (int24) {
+        return TickMath.MIN_TICK;
+    }
+
+    function MAX_TICK() external pure returns (int24) {
+        return TickMath.MAX_TICK;
     }
 }

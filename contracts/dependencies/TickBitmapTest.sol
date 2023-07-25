@@ -10,13 +10,13 @@ Find any smart contract, and build your project faster: https://www.cookbook.dev
 Twitter: https://twitter.com/cookbook_dev
 Discord: https://discord.gg/WzsfPcfHrk
 
-Find this contract on Cookbook: https://www.cookbook.dev/contracts/Uniswap-V3?utm=code
+Find this contract on Cookbook: https://www.cookbook.dev/contracts/Uniswap-V4?utm=code
 */
 
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity =0.7.6;
+pragma solidity ^0.8.20;
 
-import './TickBitmap.sol';
+import {TickBitmap} from "./TickBitmap.sol";
 
 contract TickBitmapTest {
     using TickBitmap for mapping(int16 => uint256);
